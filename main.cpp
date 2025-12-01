@@ -1,7 +1,12 @@
 #include <iostream>
 #include <string>
+#include <sstream>
+#include "InventorySystem.h"
 
 using namespace std;
+
+// Global inventory system
+InventorySystem inventory;
 
 void printHelp()
 {
@@ -16,7 +21,7 @@ bool validCommand(string line)
 {
     return (line == ":help") ||
            (line.rfind("find", 0) == 0) ||
-           (line.rfind("listInventory") == 0);
+           (line.rfind("listInventory", 0) == 0);
 }
 
 void evalCommand(string line)
@@ -25,17 +30,42 @@ void evalCommand(string line)
     {
         printHelp();
     }
-    // if line starts with find
     else if (line.rfind("find", 0) == 0)
     {
-        // Look up the appropriate datastructure to find if the inventory exist
-        cout << "YET TO IMPLEMENT!" << endl;
+        stringstream ss(line);
+        string cmd, id;
+        ss >> cmd >> id;
+
+        if (id.empty())
+        {
+            cout << "Usage: find <inventoryid>" << endl;
+            return;
+        }
+
+        const Product* p = inventory.findProduct(id);
+        if (!p)
+        {
+            cout << "Inventory not found" << endl;
+        }
+        else
+        {
+            cout << *p;
+        }
     }
-    // if line starts with listInventory
-    else if (line.rfind("listInventory") == 0)
+    else if (line.rfind("listInventory", 0) == 0)
     {
-        // Look up the appropriate datastructure to find all inventory belonging to a specific category
-        cout << "YET TO IMPLEMENT!" << endl;
+        string category = line.substr(14); // remove "listInventory "
+
+        if (!category.empty() && category[0] == ' ')
+            category.erase(0, 1);
+
+        if (category.empty())
+        {
+            cout << "Usage: listInventory <category>" << endl;
+            return;
+        }
+
+        inventory.listInventory(category);
     }
 }
 
@@ -43,17 +73,32 @@ void bootStrap()
 {
     cout << "\n Welcome to Amazon Inventory Query System" << endl;
     cout << " enter :quit to exit. or :help to list supported commands." << endl;
+
+    // --------- Load CSV HERE ----------
+    cout << "\nLoading dataset..." << endl;
+
+    // Use your exact filename:
+    string filename = "marketing_sample_for_amazon_com-ecommerce__20200101_20200131__10k_data-1.csv";
+
+    if (!inventory.loadCSV(filename))
+    {
+        cout << "Failed to load CSV. Check filename." << endl;
+    }
+    else
+    {
+        cout << "Inventory loaded successfully!" << endl;
+    }
+
+    // ------------------------------------
+
     cout << "\n> ";
-    // TODO: Do all your bootstrap operations here
-    // example: reading from CSV and initializing the data structures
-    // Don't dump all code into this single function
-    // use proper programming practices
 }
 
 int main(int argc, char const *argv[])
 {
     string line;
     bootStrap();
+
     while (getline(cin, line) && line != ":quit")
     {
         if (validCommand(line))
